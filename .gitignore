@@ -1,0 +1,10 @@
+__pycache__/
+.DS_Store
+SETTINGS.md
+index.md
+*.whl
+*.rknn
+*.onnx
+.env
+.env.*
+*.log
