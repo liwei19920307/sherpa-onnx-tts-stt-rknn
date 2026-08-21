@@ -62,6 +62,7 @@ class RKNNLite:
     RKNN_TENSOR_NCHW = 0
     RKNN_QUERY_IN_OUT_NUM = 0
     RKNN_QUERY_INPUT_ATTR = 1
+    RKNN_QUERY_OUTPUT_ATTR = 2
     NPU_CORE_AUTO = 0
     NPU_CORE_0 = 1
     NPU_CORE_1 = 2
@@ -119,6 +120,7 @@ class RKNNLite:
         self.n_input = 0
         self.n_output = 0
         self._in_attrs: List[RKNNTensorAttr] = []
+        self._out_attrs: List[RKNNTensorAttr] = []
         self._model_buf = None
 
     def load_rknn(self, model_path: str) -> int:
@@ -162,6 +164,19 @@ class RKNNLite:
             if ret != 0:
                 return ret
             self._in_attrs.append(attr)
+        self._out_attrs = []
+        for i in range(self.n_output):
+            attr = RKNNTensorAttr()
+            attr.index = i
+            ret = self.lib.rknn_query(
+                self.ctx,
+                self.RKNN_QUERY_OUTPUT_ATTR,
+                ctypes.byref(attr),
+                ctypes.sizeof(attr),
+            )
+            if ret != 0:
+                return ret
+            self._out_attrs.append(attr)
         return 0
 
     def inference(self, inputs: Sequence[np.ndarray], data_format=None):

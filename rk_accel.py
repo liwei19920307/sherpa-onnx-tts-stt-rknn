@@ -136,6 +136,9 @@ def default_rknn_stt_model(soc: str | None = None, kind: str = "sense-voice") ->
     soc = soc or detect_rk_soc()
     if not soc:
         return None
+    # Official releases use rk3566 for the 356x family (3566/3568).
+    if soc in ("rk3568", "rk3562"):
+        soc = "rk3566"
     if kind == "paraformer":
         # 15s is a good HA Assist utterance length default
         return f"sherpa-onnx-{soc}-15-seconds-paraformer-zh-2025-10-07"

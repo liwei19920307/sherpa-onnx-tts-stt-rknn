@@ -42,7 +42,12 @@ def detect_soc() -> str:
 def pick_decoder(model_dir: Path, soc: Optional[str] = None) -> Path:
     soc = (soc or detect_soc()).lower()
     preferred = "decoder_rk3588.rknn" if "3588" in soc else "decoder_rk3566.rknn"
-    for name in (preferred, "decoder_rk3588.rknn", "decoder_rk3566.rknn", "decoder.rknn"):
+    for name in (
+        preferred,
+        "decoder_rk3566.rknn",
+        "decoder_rk3588.rknn",
+        "decoder.rknn",
+    ):
         p = model_dir / name
         if p.is_file():
             return p

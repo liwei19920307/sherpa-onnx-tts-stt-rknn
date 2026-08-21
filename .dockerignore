@@ -1,0 +1,11 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.DS_Store
+*.log
+kokoro-server
+.env
+.env.*
+agent-tools
+tmp-*

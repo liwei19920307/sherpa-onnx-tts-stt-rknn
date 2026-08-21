@@ -148,6 +148,9 @@ def initialize_models(cli_args):
         "melo-rknn-zh_en",
         "melo_rknn_zh_en",
         "melo-rknn",
+        "kokoro-rknn",
+        "kokoro-rknn-zh",
+        "kokoro_rknn",
     }
     tts_provider = "cpu" if getattr(cli_args, "provider", None) == "rknn" else cli_args.provider
     if getattr(cli_args, "provider", None) == "rknn":
@@ -159,7 +162,7 @@ def initialize_models(cli_args):
         else:
             _LOGGER.info(
                 "provider=rknn: STT can use NPU; Matcha/Kokoro/Melo-CPU stay on CPU "
-                "(set TTS_MODEL=melo-rknn-zh_en or piper-rknn-zh for NPU decoder)"
+                "(set TTS_MODEL=melo-rknn-zh_en, kokoro-rknn, or piper-rknn-zh for NPU decoder)"
             )
 
     # STT Initialization (adjust paths as needed for extracted model)

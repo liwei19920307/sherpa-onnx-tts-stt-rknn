@@ -270,28 +270,34 @@ async def main() -> None:
 
     _LOGGER.info("Starting sherpa-onnx add-on...")
 
-    # Wyoming Info
-    tts_voices = []
+    stt_model, tts_model = initialize_models(cli_args)
+
+    # Wyoming Info — advertise real TTS voices, not a fake 0..100 list.
     voice_attribution = Attribution(name="k2-fsa", url="https://github.com/k2-fsa/sherpa-onnx")
-    voice_installed = True
-    voice_version = "0.0.1"
-
-    # Assuming speakers 0 to 100 based on user feedback.
-    num_speakers = 101
-
-    for i in range(num_speakers): # Loop from 0 to 100
-        speaker_id_str = str(i)
-        speaker_desc = f"speaker{i}"
-        tts_voices.append(
+    named = getattr(tts_model, "_voices", None)
+    if named:
+        tts_voices = [
             TtsVoice(
-                name=speaker_id_str,
-                description=speaker_desc,
+                name=str(i),
+                description=label,
                 languages=[cli_args.language],
                 attribution=voice_attribution,
-                installed=voice_installed,
-                version=voice_version,
+                installed=True,
+                version="0.0.1",
             )
-        )
+            for i, label in enumerate(named)
+        ]
+    else:
+        tts_voices = [
+            TtsVoice(
+                name="0",
+                description="default",
+                languages=[cli_args.language],
+                attribution=voice_attribution,
+                installed=True,
+                version="0.0.1",
+            )
+        ]
 
     wyoming_info = Info(
         asr=[
@@ -324,7 +330,6 @@ async def main() -> None:
             )
         ],
     )
-    stt_model, tts_model = initialize_models(cli_args)
 
     if cli_args.run:
         # Run Wyoming server in a separate task

@@ -10,6 +10,8 @@ import time
 from utils import *
 from rknn_lite_ctypes import RKNNLite
 
+# Derived from happyme531/MeloTTS-RKNN2 (AGPL-3.0). See NOTICE.md.
+
 
 
 def get_args():

@@ -1,49 +1,62 @@
-# Home Assistant Add-on: Sherpa Onnx TTS/STT
+# sherpa-onnx-tts-stt (Rockchip RKNN fork)
 
-![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield]
+Wyoming + OpenAI-compatible **offline TTS/STT** for Home Assistant, with **Rockchip NPU**
+acceleration on RK3566 / RK3568 / RK3588.
 
-Supports Kokoro-TTS!!
+Fork of [ptbsare/sherpa-onnx-tts-stt](https://github.com/ptbsare/sherpa-onnx-tts-stt).
 
-Offline Sherpa-onnx TTS/STT with wyoming support, supports kokoro-TTS/matcha-TTS/paraformer-STT, requires 1.5GB RAM.
+**License: [AGPL-3.0](./LICENSE)** — see [NOTICE.md](./NOTICE.md) (Melo RKNN path is AGPL-derived).
 
-离线Sherpa-onnx TTS/STT的wyoming集成，支持kokoro-TTS/matcha-TTS/paraformer-STT，需要1.5G内存。
+## Features
 
-Also supports Openai-format TTS/STT api  IP:10500/v1/audio/speech IP:10500/v1/audio/transcriptions
+- **STT (NPU):** SenseVoice / Paraformer official sherpa-onnx `.rknn` packs (auto SoC pick)
+- **TTS (NPU decoder):**
+  - `kokoro-rknn` — Kokoro v1.1-zh hybrid (default in compose)
+  - `melo-rknn-zh_en` — Melo hybrid
+- **Wyoming** `:10400` · **OpenAI-style API** `:10500`
+- Models optional in git; bake into Docker image at build time (`bundle/`)
 
-同时支持Openai TTS/STT 格式两个接口  IP:10500/v1/audio/speech IP:10500/v1/audio/transcriptions
-(It just works. PR is welcomed to improve this.)
-
-## Rockchip NPU (RK3566 / RK3588)
-
-This fork can run **STT on the Rockchip NPU** via sherpa-onnx `provider=rknn` and official `.rknn` ASR packs.
-
-| Block | Accelerates this addon? |
-|-------|-------------------------|
-| NPU | Yes — SenseVoice / Paraformer STT |
-| CPU | Yes — all TTS (Matcha/Kokoro/VITS) |
-| Mali GPU | No |
-| MPP hard decode / RGA | No (video only) |
-
-See **[RKNN.md](./RKNN.md)** and `docker-compose.rknn.yml`.
+## Quick deploy (pull-only)
 
 ```bash
-docker build --build-arg BUILD_TYPE=rknn -t sherpa-onnx-tts-stt:rknn .
-docker compose -f docker-compose.rknn.yml up
+docker pull liwei19920307/sherpa-onnx-tts-stt:rknn
+
+docker run -d --name sherpa --restart unless-stopped \
+  --privileged --network host \
+  -e TZ=Asia/Shanghai \
+  -e PROVIDER=rknn \
+  -e TTS_MODEL=kokoro-rknn -e KOKORO_VOICE=zf_001 \
+  -e STT_MODEL=rknn-sense-voice \
+  -v /usr/lib/librknnrt.so:/usr/lib/librknnrt.so:ro \
+  -v /sys/kernel/debug:/sys/kernel/debug:ro \
+  liwei19920307/sherpa-onnx-tts-stt:rknn
 ```
 
-## Supported STT Models:
-* rknn-sense-voice (auto chip-matched SenseVoice `.rknn` on NPU)
-* rknn-paraformer-zh (auto chip-matched Paraformer-zh `.rknn` on NPU)
-* sherpa-onnx-paraformer-zh-2023-03-28 (Chinese Only, CPU / CUDA)
-* sherpa-onnx-paraformer-zh-small-2024-03-09 (Chinese Only, CPU / CUDA)
+Or: `docker compose -f docker-compose.rknn.yml up -d`
 
-## Supported TTS Models:
-* matcha-icefall-zh-baker (Chinese Only)
-* vits-melo-tts-zh_en (Chinese and English)
-* kokoro-int8-multi-lang-v1_1 (Multiple-Languages)
+Home Assistant → Integrations → **Wyoming** → `127.0.0.1` / board IP, port **10400**.
 
-## Custom Models are supported.
-See [DOCS.md](./DOCS.md) for documentation.
+Do **not** bind-mount host app/model trees for production; the image already contains them.
 
-[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
-[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+More: [DEPLOY.md](./DEPLOY.md) · [RKNN.md](./RKNN.md) · [DOCS.md](./DOCS.md)
+
+## Build image (on aarch64 board)
+
+```bash
+# Prepare bundle/tts and bundle/stt with SoC-matched .rknn packs (see DEPLOY.md)
+docker build -f Dockerfile.rknn -t sherpa-onnx-tts-stt:rknn .
+```
+
+`.whl` / `.rknn` / `.onnx` are gitignored — download from upstream releases / your conversion output.
+
+## Supported model selectors
+
+**STT:** `rknn-sense-voice`, `rknn-paraformer-zh`, or full sherpa-onnx folder name  
+
+**TTS:** `kokoro-rknn`, `melo-rknn-zh_en`, plus upstream CPU models (`vits-melo-tts-zh_en`, Matcha, …)
+
+## Disclaimer
+
+Rockchip NPU runtime (`librknnrt`) is proprietary. Converted `.rknn` files and Docker
+images that include AGPL components must comply with AGPL (source offer). This project
+is provided as-is for self-hosting on your own hardware.

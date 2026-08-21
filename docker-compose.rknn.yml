@@ -1,44 +1,26 @@
+# 正式部署：镜像内已含模型与代码，不要再挂 /opt/sherpa/app 或 models。
+#   docker compose -f docker-compose.rknn.yml pull
+#   docker compose -f docker-compose.rknn.yml up -d
+
 services:
-  sherpa-onnx-tts-stt:
+  sherpa:
     image: liwei19920307/sherpa-onnx-tts-stt:rknn
-    build:
-      context: .
-      dockerfile: Dockerfile.rknn
-      network: host
-      args:
-        # Optional: set when the board needs an HTTP proxy to pull packages
-        # http_proxy: http://127.0.0.1:7890
-        # https_proxy: http://127.0.0.1:7890
-    container_name: sherpa-onnx-tts-stt-rknn
+    container_name: sherpa
     restart: unless-stopped
-    # No /dev/rknpu on some Armbian kernels; privileged exposes NPU.
     privileged: true
-    ports:
-      - "10400:10400"
-      - "10500:10500"
+    network_mode: host
     environment:
+      TZ: Asia/Shanghai
       PROVIDER: rknn
+      # 空=读 device-tree（rk3588 / rk3566 / rk3568）
       RK_SOC: ""
       LANGUAGE: zh-CN
       STT_MODEL: rknn-sense-voice
       STT_THREAD_NUM: "1"
-      TTS_MODEL: melo-rknn-zh_en
-      TTS_THREAD_NUM: "2"
-      TTS_SPEAKER_SID: "0"
-      SPEED: "1.0"
-      MELO_RKNN_DIR: /tts-models/melo-rknn
-      PIPER_RKNN_DIR: /tts-models/piper-zh
-      DEBUG: "False"
-      CUSTOM_STT_MODEL_EVAL: "null"
-      CUSTOM_TTS_MODEL_EVAL: "null"
-    devices:
-      - /dev/dri:/dev/dri
+      TTS_MODEL: kokoro-rknn
+      KOKORO_VOICE: zf_001
     volumes:
+      # 仅主机运行时库 + NPU debug（可选 localtime）
       - /etc/localtime:/etc/localtime:ro
       - /usr/lib/librknnrt.so:/usr/lib/librknnrt.so:ro
       - /sys/kernel/debug:/sys/kernel/debug:ro
-      # First-boot layout on device:
-      #   /opt/sherpa/models/stt/<sensevoice>/
-      #   /opt/sherpa/models/tts/melo-rknn/
-      - /opt/sherpa/models/stt:/stt-models:ro
-      - /opt/sherpa/models/tts:/tts-models:ro
